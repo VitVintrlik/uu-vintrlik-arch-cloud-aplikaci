@@ -1,16 +1,6 @@
-import { useState, useMemo } from 'react';
-
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  flexRender,
-  type SortingState,
-  type ColumnDef,
-  type CellContext,
-} from '@tanstack/react-table';
+import { flexRender } from '@tanstack/react-table';
 
 import {
   Card,
@@ -21,91 +11,16 @@ import {
   TableHeader,
   TableRow,
 } from '@uu/kinetic-ui';
-import { SessionStatus, type WorkoutSession } from 'shared';
 
+import { type ColumnMeta } from '../components/session/sessionList/columns';
 import { Skeleton } from '../components/ui/Skeleton';
-import { useSessionsQuery } from '../hooks/api/useSessions';
-import { formatShortDate, formatDuration, formatSplit } from '../utils/formatters';
-
-type ColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
-
-const columns: ColumnDef<WorkoutSession, string>[] = [
-  {
-    accessorKey: 'date',
-    header: 'Datum',
-    meta: {
-      headerClassName: 'w-[15%] pl-6',
-      cellClassName: 'w-[15%] pl-6 font-mono text-base text-on-surface',
-    } satisfies ColumnMeta,
-    cell: (info: CellContext<WorkoutSession, string>) => formatShortDate(info.getValue()),
-  },
-  {
-    accessorKey: 'name',
-    header: 'Název',
-    meta: {
-      headerClassName: 'w-[35%]',
-      cellClassName: 'w-[35%] text-base text-on-surface',
-    } satisfies ColumnMeta,
-  },
-  {
-    accessorKey: 'split',
-    header: 'Split',
-    meta: {
-      headerClassName: 'w-[15%]',
-      cellClassName: 'w-[15%] text-base text-on-surface font-mono',
-    } satisfies ColumnMeta,
-    cell: (info: CellContext<WorkoutSession, string>) => formatSplit(info.getValue()),
-  },
-  {
-    accessorKey: 'duration',
-    header: 'Doba',
-    meta: {
-      headerClassName: 'w-[15%]',
-      cellClassName: 'w-[15%] text-base text-on-surface font-mono',
-    } satisfies ColumnMeta,
-    cell: (info: CellContext<WorkoutSession, string>) =>
-      formatDuration(info.getValue() as unknown as number),
-  },
-  {
-    accessorKey: 'note',
-    header: 'Poznámka',
-    enableSorting: false,
-    meta: {
-      headerClassName: 'w-[20%] pr-6',
-      cellClassName: 'w-[20%] pr-6 text-base text-on-surface-variant',
-    } satisfies ColumnMeta,
-    cell: (info: CellContext<WorkoutSession, string>) => (
-      <span className="truncate max-w-[240px] block">{info.getValue() || '—'}</span>
-    ),
-  },
-];
+import { useSessionList } from '../hooks/domain/useSessionList';
 
 /** Sortable table of all finished sessions. */
 const SessionList = () => {
-  const { data: sessions, isLoading } = useSessionsQuery();
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'date', desc: true }]);
+  const { table, isLoading, isEmpty } = useSessionList();
   const navigate = useNavigate();
 
-  // 2. Filter for finished sessions
-  const finishedSessions = useMemo(() => {
-    if (!sessions) return [];
-    return sessions.filter((s) => s.status === SessionStatus.FINISHED);
-  }, [sessions]);
-
-  // 3. Initialize TanStack Table
-  const table = useReactTable({
-    data: finishedSessions,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
-
-  // 4. Loading State
   if (isLoading) {
     return (
       <div className="w-full max-w-[1200px] mx-auto pb-24 font-sans">
@@ -121,8 +36,7 @@ const SessionList = () => {
     );
   }
 
-  // 5. Empty State
-  if (finishedSessions.length === 0) {
+  if (isEmpty) {
     return (
       <div className="w-full max-w-[1200px] mx-auto pb-24 font-sans">
         <h1 className="font-display text-3xl font-bold text-white mb-8 tracking-tight uppercase">
@@ -135,7 +49,6 @@ const SessionList = () => {
     );
   }
 
-  // 6. Table Render
   return (
     <div className="w-full max-w-[1200px] mx-auto pb-24 font-sans">
       <h1 className="font-display text-3xl font-bold text-white mb-8 tracking-tight uppercase">
@@ -152,12 +65,11 @@ const SessionList = () => {
               >
                 {headerGroup.headers.map((header) => {
                   const meta = (header.column.columnDef.meta as ColumnMeta) || {};
-                  const metaClass = meta.headerClassName || '';
                   return (
                     <TableHead
                       key={header.id}
                       onClick={header.column.getToggleSortingHandler()}
-                      className={`py-3 px-4 tracking-widest font-bold text-primary-fixed ${metaClass} ${
+                      className={`py-3 px-4 tracking-widest font-bold text-primary-fixed ${meta.headerClassName ?? ''} ${
                         header.column.getCanSort()
                           ? 'cursor-pointer hover:text-white transition-colors'
                           : ''
@@ -191,9 +103,8 @@ const SessionList = () => {
               >
                 {row.getVisibleCells().map((cell) => {
                   const meta = (cell.column.columnDef.meta as ColumnMeta) || {};
-                  const metaClass = meta.cellClassName || '';
                   return (
-                    <TableCell key={cell.id} className={`py-4 px-4 ${metaClass}`}>
+                    <TableCell key={cell.id} className={`py-4 px-4 ${meta.cellClassName ?? ''}`}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   );
