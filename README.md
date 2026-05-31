@@ -59,7 +59,7 @@ Podrobná technická dokumentace a architektonická rozhodnutí jsou popsána v 
 ---
 
 
-## Poznámky pro učitele
+## Poznámky 
 
 - Projekt jsem odevzdal do svého stávajícího repozitáře — pro backend mi vypršel invite link a migrovat celé repo do školního gitu jen kvůli tomu mi přišlo zbytečné.
 - Aplikaci stačí spustit přes `npm run dev`. Připravil jsem testovací dataset v `seed.ts`, ze kterého se vygenerovala `liftlog.db` db není v`.gitignore`, takže je součástí repozitáře jako zbytek codebase.
