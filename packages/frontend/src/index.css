@@ -1,0 +1,9 @@
+@import '@uu/kinetic-ui/styles';
+
+@theme {
+  /* Inherit all tokens from UI package */
+}
+
+@layer base {
+  /* Global defaults */
+}
